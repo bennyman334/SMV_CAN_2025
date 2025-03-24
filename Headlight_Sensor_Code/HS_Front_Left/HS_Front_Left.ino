@@ -1,3 +1,4 @@
+//#include <SMVcanbus.h>
 #include "SMVcanbus.h"
 
 CANBUS can(HS3);
@@ -11,9 +12,12 @@ const int headlight = 5; //bottom connector
 const int runninglight = 11;
 const int blinker = 6; //middle connector
 
-bool isHazard = false;
-int hazardState = 0;
+bool isHazard = false; //whether hazard light is on or not
+int hazardState = 0; 
 int blinkerState = 0;
+
+int blinkCycle = 0;
+int hazardCycle = 0;
 
 void setup(void){ //do something to detect initial state?
   Serial.begin(115200);
@@ -26,13 +30,12 @@ void setup(void){ //do something to detect initial state?
 
 }
 
-int blinkLight(int currentState) {
+int blinkLight(int currentState) { //input 1, will output 0 and vice versa (change states)
   if(currentState == 0) {
     return 1;
   }
   return 0;
 }
-
 
 
 void loop(){
@@ -65,9 +68,10 @@ void loop(){
     
   }
 
-  if(isHazard) { //Hazard lights will override the headlights
+  if(isHazard && hazardCycle%10 == 0) { //Hazard lights will override the headlights
     hazardState = blinkLight(hazardState); 
     digitalWrite(headlight, hazardState);
+    hazardCycle = (hazardCycle + 1)%10; //keeps hazardCycle between 0 to 9 (we don't want int to get too big i think)
   }
 
 //will follow headlights only if hazard is not on
@@ -82,21 +86,11 @@ void loop(){
   if(datarec1 == 0) {
     digitalWrite(LED, LOW);
     digitalWrite(blinker, LOW);
-  } else if (datarec1 > 0) {
+  } else if (datarec1 > 0 && blinkCycle%10 == 0) { //every 10 iterations will change its blinkState
     digitalWrite(LED, HIGH);
-    //digitalWrite(blinker, HIGH);
-
-    if(blinkerState == 0) {
-      blinkerState = 1;
-    } else {
-      blinkerState = 0;
-    }
-    //if(blinkerState )
-    if(blinkerState == 0) {
-      digitalWrite(blinker, LOW);
-    } else {
-      digitalWrite(blinker, HIGH);
-    }
+    blinkerState = blinkLight(blinkerState);
+    digitalWrite(blinker, blinkerState);
+    blinkCycle = (blinkCycle + 1)%10;
   }
-  delay(250);
+  delay(25);
 }
