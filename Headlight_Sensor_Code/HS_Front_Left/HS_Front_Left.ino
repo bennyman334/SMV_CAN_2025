@@ -35,7 +35,7 @@ int blinkLight(int currentState) { //input 1, will output 0 and vice versa (chan
     return 1;
   }
   return 0;
-
+}
 
 
 void loop(){
