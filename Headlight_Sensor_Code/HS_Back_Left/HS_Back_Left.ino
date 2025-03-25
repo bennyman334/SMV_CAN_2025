@@ -68,19 +68,23 @@ void loop(){
     
   }
 
-  if(isHazard && hazardCycle%10 == 0) { //Hazard lights will override the headlights
-    hazardState = blinkLight(hazardState); 
+  if(isHazard) { //Hazard lights will override the running lights
+    if(hazardCycle%10 == 0) {
+      hazardState = blinkLight(hazardState); 
+    }
     digitalWrite(runninglight, hazardState);
     hazardCycle = (hazardCycle + 1)%10; //keeps hazardCycle between 0 to 9 (we don't want int to get too big i think)
+  } else {
+    digitalWrite(runninglight, HIGH); //runninglight is always on (except for when hazard lights are turned on)
   }
 
-//will follow headlights only if hazard is not on
+//brake lights will be based on the hall sensor
   if(datarec == 0) {
     //digitalWrite(LED, LOW);
-    digitalWrite(brakelight, LOW);
-  } else if (datarec > 0 && !isHazard) {
+    digitalWrite(brakelight, LOW); //no brake detected
+  } else if (datarec > 0) {
     //digitalWrite(LED, HIGH);
-    digitalWrite(headlight, HIGH);
+    digitalWrite(brakelight, HIGH);
   }
 
   if(datarec1 == 0) {
@@ -88,13 +92,12 @@ void loop(){
     digitalWrite(blinker, LOW);
   } else if (datarec1 > 0 && blinkCycle%10 == 0) { //every 10 iterations will change its blinkState
     digitalWrite(LED, HIGH);
-    blinkerState = blinkLight(blinkerState);
+    if(blinkCycle%10 == 0) {
+      blinkerState = blinkLight(blinkerState);
+    }
     digitalWrite(blinker, blinkerState);
     blinkCycle = (blinkCycle + 1)%10;
   }
-
-  digitalWrite(runninglight, HIGH); //runninglight is always on
-
 
   delay(25);
 }

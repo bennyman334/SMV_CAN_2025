@@ -69,10 +69,10 @@ void loop(){
   }
 
   if(isHazard) { //Hazard lights will override the headlights
-    hazardState = blinkLight(hazardState); 
     if(hazardCycle%10 == 0) {
-      digitalWrite(headlight, hazardState);
+      hazardState = blinkLight(hazardState); 
     }
+    digitalWrite(headlight, hazardState);
     hazardCycle = (hazardCycle + 1)%10; //keeps hazardCycle between 0 to 9 (we don't want int to get too big i think)
   }
 
