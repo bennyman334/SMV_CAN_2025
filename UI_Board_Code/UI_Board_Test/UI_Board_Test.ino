@@ -104,14 +104,16 @@ void setup() {
 //testing
   inputObjects[0] = new Input(27, SWITCH, Headlights);
   inputObjects[1] = new Input(9, SWITCH, Blink_Left);
-  inputObjects[2] = new Input(29, SWITCH, Hazard);
+  inputObjects[2] = new Input(6, SWITCH, Blink_Right);
+  inputObjects[3] = new Input(29, SWITCH, Hazard);
+  inputObjects[4] = new Input(13, SWITCH, Motor);
   
   //Set CAN serialization
   Serial.begin(115200);
   can.begin();
   delay(500);
 
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<5; i++) {
     inputObjects[i]->initialState();
   }
 }
@@ -122,7 +124,7 @@ void loop() {
   // for (int i=0; i<numInputs; i++) {
   //   inputObjects[i]->detectState();
   // }
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<5; i++) {
     inputObjects[i]->detectState();
   }
   delay(500);

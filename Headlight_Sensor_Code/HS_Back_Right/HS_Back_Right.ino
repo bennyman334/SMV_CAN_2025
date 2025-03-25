@@ -54,7 +54,7 @@ void loop(){
       datarec = can.getData();
     }
 
-    if(strcmp(can.getDataType(), "Blink_Left") == 0) {
+    if(strcmp(can.getDataType(), "Blink_Right") == 0) {
       datarec1 = can.getData();
     }
 
