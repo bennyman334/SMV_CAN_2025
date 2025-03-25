@@ -35,7 +35,7 @@ int blinkLight(int currentState) { //input 1, will output 0 and vice versa (chan
     return 1;
   }
   return 0;
-
+}
 
 
 void loop(){
@@ -53,7 +53,7 @@ void loop(){
       datarec = can.getData();
     }
 
-    if(strcmp(can.getDataType(), "Blink_Left") == 0) {
+    if(strcmp(can.getDataType(), "Blink_Right") == 0) {
       datarec1 = can.getData();
     }
 
@@ -71,8 +71,8 @@ void loop(){
   if(isHazard) { //Hazard lights will override the headlights
     if(hazardCycle%10 == 0) {
       hazardState = blinkLight(hazardState); 
-      digitalWrite(headlight, hazardState);
     }
+    digitalWrite(headlight, hazardState);
     hazardCycle = (hazardCycle + 1)%10; //keeps hazardCycle between 0 to 9 (we don't want int to get too big i think)
   }
 
@@ -92,8 +92,8 @@ void loop(){
     digitalWrite(LED, HIGH);
     if(blinkCycle%10 == 0) {
       blinkerState = blinkLight(blinkerState);
-      digitalWrite(blinker, blinkerState);
     }
+    digitalWrite(blinker, blinkerState);
     blinkCycle = (blinkCycle + 1)%10;
   }
   delay(25);
