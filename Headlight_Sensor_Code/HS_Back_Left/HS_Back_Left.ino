@@ -3,13 +3,13 @@
 
 CANBUS can(HS3);
 
-double datarec = 0; //for headlights
+double datarec = 0; //for brakelight
 double datarec1 = 0; //for blinker
 double datarec2 = 0; //for hazard;
 
 const int LED = 12;
-const int headlight = 5; //bottom connector
-const int runninglight = 11;
+const int brakelight = 5; //bottom connector
+const int runninglight = 11; //top connector
 const int blinker = 6; //middle connector
 
 bool isHazard = false; //whether hazard light is on or not
@@ -24,7 +24,7 @@ void setup(void){ //do something to detect initial state?
   can.begin();
   delay(400); //for printing
   pinMode(LED, OUTPUT);
-  pinMode(headlight, OUTPUT);
+  pinMode(brakelight, OUTPUT);
   pinMode(blinker, OUTPUT);
   pinMode(runninglight, OUTPUT);
 
@@ -40,7 +40,7 @@ int blinkLight(int currentState) { //input 1, will output 0 and vice versa (chan
 
 void loop(){
   can.looper();
-  if(can.isThere() && strcmp(can.getHardware(), "UI") == 0)
+  if(can.isThere() && (strcmp(can.getHardware(), "UI") == 0 || strcmp(can.getHardware(), "FC") == 0))
   {
     // Serial.print("The data is: ");
     // Serial.println(can.getData());
@@ -49,7 +49,7 @@ void loop(){
     // Serial.print("The Data Type is: ");
     // Serial.println(can.getDataType());
 
-    if(strcmp(can.getDataType(), "Headlights") == 0){
+    if(strcmp(can.getDataType(), "Brake") == 0){
       datarec = can.getData();
     }
 
@@ -68,18 +68,16 @@ void loop(){
     
   }
 
-  if(isHazard) { //Hazard lights will override the headlights
+  if(isHazard && hazardCycle%10 == 0) { //Hazard lights will override the headlights
     hazardState = blinkLight(hazardState); 
-    if(hazardCycle%10 == 0) {
-      digitalWrite(headlight, hazardState);
-    }
+    digitalWrite(runninglight, hazardState);
     hazardCycle = (hazardCycle + 1)%10; //keeps hazardCycle between 0 to 9 (we don't want int to get too big i think)
   }
 
 //will follow headlights only if hazard is not on
-  if(datarec == 0 && !isHazard) {
+  if(datarec == 0) {
     //digitalWrite(LED, LOW);
-    digitalWrite(headlight, LOW);
+    digitalWrite(brakelight, LOW);
   } else if (datarec > 0 && !isHazard) {
     //digitalWrite(LED, HIGH);
     digitalWrite(headlight, HIGH);
@@ -88,13 +86,15 @@ void loop(){
   if(datarec1 == 0) {
     digitalWrite(LED, LOW);
     digitalWrite(blinker, LOW);
-  } else if (datarec1 > 0) { //every 10 iterations will change its blinkState
+  } else if (datarec1 > 0 && blinkCycle%10 == 0) { //every 10 iterations will change its blinkState
     digitalWrite(LED, HIGH);
-    if(blinkCycle%10 == 0) {
-      blinkerState = blinkLight(blinkerState);
-    }
+    blinkerState = blinkLight(blinkerState);
     digitalWrite(blinker, blinkerState);
     blinkCycle = (blinkCycle + 1)%10;
   }
+
+  digitalWrite(runninglight, HIGH); //runninglight is always on
+
+
   delay(25);
 }
