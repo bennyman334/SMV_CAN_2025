@@ -1,7 +1,8 @@
 //#include <SMVcanbus.h>
 #include "SMVcanbus.h"
+#include "smv_accel.h"
 
-CANBUS can(HS3);
+CANBUS can(HS2);
 
 double datarec = 0; //for headlights
 double datarec1 = 0; //for blinker
@@ -19,6 +20,10 @@ int blinkerState = 0;
 int blinkCycle = 0;
 int hazardCycle = 0;
 
+//accelerometer definitions
+const int CS_PIN = 13;
+ASM330LHH sensor(CS_PIN);
+
 void setup(void){ //do something to detect initial state?
   Serial.begin(115200);
   can.begin();
@@ -28,6 +33,8 @@ void setup(void){ //do something to detect initial state?
   pinMode(blinker, OUTPUT);
   pinMode(runninglight, OUTPUT);
 
+  //---Accelerometer---
+  sensor.begin();
 }
 
 int blinkLight(int currentState) { //input 1, will output 0 and vice versa (change states)
@@ -96,5 +103,20 @@ void loop(){
     }
     blinkCycle = (blinkCycle + 1)%10;
   }
+
+  //------Accelerometer CAN stuff-------
+  int32_t accelerometer[3] = {};
+  int32_t gyroscope[3] = {};
+  sensor.readAccelerometer(accelerometer);
+  sensor.readGyroscope(gyroscope);
+
+  can.send(accelerometer[0], Accel_x);
+  can.send(accelerometer[1], Accel_y);
+  can.send(accelerometer[2], Accel_z);
+
+  can.send(gyroscope[0], Gyro_x);
+  can.send(gyroscope[1], Gyro_y);
+  can.send(gyroscope[2], Gyro_z);
+
   delay(25);
 }
