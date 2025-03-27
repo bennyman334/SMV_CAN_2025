@@ -1,3 +1,5 @@
+#include <Adafruit_MCP2515.h>
+
 //#include <SMVcanbus.h>
 #include "smv_accel.h"
 #include "SMVcanbus.h"

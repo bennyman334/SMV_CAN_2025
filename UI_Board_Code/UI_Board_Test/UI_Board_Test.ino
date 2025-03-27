@@ -127,5 +127,5 @@ void loop() {
   for (int i=0; i<5; i++) {
     inputObjects[i]->detectState();
   }
-  delay(500);
+  delay(30);
 }
