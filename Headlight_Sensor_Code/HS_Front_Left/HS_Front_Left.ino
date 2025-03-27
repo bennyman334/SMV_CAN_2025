@@ -105,21 +105,20 @@ void loop(){
     blinkCycle = (blinkCycle + 1)%10;
   }
 
-  //------Accelerometer CAN stuff-------
+  ------Accelerometer CAN stuff-------
   int32_t accelerometer[3] = {};
   int32_t gyroscope[3] = {};
 
   if (sendBuffer%20 == 0){
     sensor.readAccelerometer(accelerometer);
     sensor.readGyroscope(gyroscope);
-
-    can.send(accelerometer[0], Accel_x);
-    can.send(accelerometer[1], Accel_y);
-    can.send(accelerometer[2], Accel_z);
-
-    can.send(gyroscope[0], Gyro_x);
-    can.send(gyroscope[1], Gyro_y);
-    can.send(gyroscope[2], Gyro_z);
+    
+    // can.send(accelerometer[0], Accel_x);
+    // can.send(accelerometer[1], Accel_y);
+    // can.send(accelerometer[2], Accel_z);
+    // can.send(gyroscope[0], Gyro_x);
+    // can.send(gyroscope[1], Gyro_y);
+    // can.send(gyroscope[2], Gyro_z);
   }
   sendBuffer += 1;
 

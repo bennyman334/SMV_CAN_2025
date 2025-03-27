@@ -121,12 +121,4 @@ void loop(){
     can.send(accelerometer[2], Accel_z);
 
     can.send(gyroscope[0], Gyro_x);
-    can.send(gyroscope[1], Gyro_y);
-    can.send(gyroscope[2], Gyro_z);
-  }
-
-  sendBuffer += 1;
- 
-
-  delay(25);
-}
+    can.send(gyroscope

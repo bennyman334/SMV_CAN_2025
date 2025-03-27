@@ -1,5 +1,6 @@
 //#include <SMVcanbus.h>
 #include "SMVcanbus.h"
+#include "smv_accel.h"
 
 CANBUS can(HS3);
 
@@ -20,6 +21,12 @@ int blinkerState = 0;
 int blinkCycle = 0;
 int hazardCycle = 0;
 
+int sendBuffer = 0;
+
+//accelerometer definitions
+const int CS_PIN = 13;
+ASM330LHH sensor(CS_PIN);
+
 void setup(void){ //do something to detect initial state?
   Serial.begin(115200);
   can.begin();
@@ -28,6 +35,9 @@ void setup(void){ //do something to detect initial state?
   pinMode(brakelight, OUTPUT);
   pinMode(blinker, OUTPUT);
   pinMode(runninglight, OUTPUT);
+
+  //---Accelerometer---
+  sensor.begin();
 
 }
 
@@ -88,10 +98,10 @@ void loop(){
   }
 
 //brake lights will be based on the hall sensor
-  if(datarec == 0) {
+  if(datarec <= 0.25) {
     //digitalWrite(LED, LOW);
     digitalWrite(brakelight, LOW); //no brake detected
-  } else if (datarec > 0) {
+  } else if (datarec > 0.25) {
     //digitalWrite(LED, HIGH);
     digitalWrite(brakelight, HIGH);
   }
@@ -101,12 +111,29 @@ void loop(){
     digitalWrite(blinker, LOW);
   } else if (datarec1 > 0 && blinkCycle%10 == 0) { //every 10 iterations will change its blinkState
     digitalWrite(LED, HIGH);
-    if(blinkCycle%10 == 0) {
+   if(blinkCycle%10 == 0) {
       blinkerState = blinkLight(blinkerState);
     }
     digitalWrite(blinker, blinkerState);
     blinkCycle = (blinkCycle + 1)%10;
   }
+
+  //------Accelerometer CAN stuff-------
+  int32_t accelerometer[3] = {};
+  int32_t gyroscope[3] = {};
+
+  if (sendBuffer%20 == 0){
+    sensor.readAccelerometer(accelerometer);
+    sensor.readGyroscope(gyroscope);
+    
+    can.send(accelerometer[0], Accel_x);
+    // can.send(accelerometer[1], Accel_y);
+    // can.send(accelerometer[2], Accel_z);
+    // can.send(gyroscope[0], Gyro_x);
+    // can.send(gyroscope[1], Gyro_y);
+    // can.send(gyroscope[2], Gyro_z);
+  }
+  sendBuffer += 1;
 
   delay(25);
 }
