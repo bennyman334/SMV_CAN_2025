@@ -109,7 +109,7 @@ void loop(){
   if(datarec1 == 0) {
     digitalWrite(LED, LOW);
     digitalWrite(blinker, LOW);
-  } else if (datarec1 > 0 && blinkCycle%10 == 0) { //every 10 iterations will change its blinkState
+  } else if (datarec1 > 0) { //every 10 iterations will change its blinkState
     digitalWrite(LED, HIGH);
    if(blinkCycle%10 == 0) {
       blinkerState = blinkLight(blinkerState);
