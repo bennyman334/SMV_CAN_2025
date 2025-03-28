@@ -23,6 +23,7 @@ int blinkCycle = 0;
 int hazardCycle = 0;
 
 int sendBuffer = 0;
+int accelSendState = 0;
 
 //accelerometer definitions
 const int CS_PIN = 13;
@@ -111,14 +112,28 @@ void loop(){
     //------Accelerometer CAN stuff-------
   int32_t accelerometer[3] = {};
   int32_t gyroscope[3] = {};
-
   if (sendBuffer%20 == 0){
     sensor.readAccelerometer(accelerometer);
-    sensor.readGyroscope(gyroscope);
+    // sensor.readGyroscope(gyroscope);
+    
+    if(accelSendState == 0){
+      can.send(accelerometer[0], Accel_x);
+      accelSendState = 1;
+    }
+    else if(accelSendState == 1){
+      can.send(accelerometer[1], Accel_y);
+      accelSendState = 2;
+    }
+    else if(accelSendState == 2){
+      can.send(accelerometer[2], Accel_z);
+      accelSendState = 0;
+    }
+    
+    // can.send(gyroscope[0], Gyro_x);
+    // can.send(gyroscope[1], Gyro_y);
+    // can.send(gyroscope[2], Gyro_z);
+  }
+  sendBuffer += 1;
 
-    can.send(accelerometer[0], Accel_x);
-    can.send(accelerometer[1], Accel_y);
-    can.send(accelerometer[2], Accel_z);
-
-    can.send(gyroscope[0], Gyro_x);
-    can.send(gyroscope
+  delay(25);
+}
