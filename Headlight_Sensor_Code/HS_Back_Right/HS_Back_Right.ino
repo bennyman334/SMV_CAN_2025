@@ -88,10 +88,10 @@ void loop(){
   }
 
 //brake lights will be based on the hall sensor
-  if(datarec == 0) {
+  if(datarec <= 0.25) {
     //digitalWrite(LED, LOW);
     digitalWrite(brakelight, LOW); //no brake detected
-  } else if (datarec > 0) {
+  } else if (datarec > 0.25) {
     //digitalWrite(LED, HIGH);
     digitalWrite(brakelight, HIGH);
   }

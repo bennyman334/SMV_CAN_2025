@@ -88,7 +88,7 @@ void loop()
     // Serial.println("");
     // delay(500);
 
-    double data = adc.convert(res.ch0);
+    double data = adc.convert(res.ch1);
     //Serial.println(data);
     can.begin();
     can.send(data, Brake);
