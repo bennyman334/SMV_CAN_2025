@@ -11,6 +11,8 @@
 ADS131M04 adc;
 adcOutput res;
 RP2040_PWM* PWM_Instance;
+RP2040_PWM* motor_PWM_1;
+RP2040_PWM* motor_PWM_2;
 CANBUS can(FC);
 Servo myServo;
 
@@ -19,17 +21,18 @@ double horn_data = 0;
 char* data_type_rec;
 
 
-const int wiper_switch = 12;
-const int horn_switch = 11;
-const int wiper_pwm = 13;
+const int wiper_switch = 12; //D12
+const int horn_switch = 11; //D11
+const int wiper_pwm = 13; //D13
 
 //Pulse Widths
 const int minPulseWidth = 500; // microseconds
 const int maxPulseWidth = 2500; // microseconds
 const int neutralPulseWidth = 1500; // microseconds
 
-
-const int CLOCK_PIN = 26;
+const int CLOCK_PIN = 26; //CLKIN
+const int motor_pwm_pin_1 = 4; //motor pwm output
+const int motor_pwm_pin_2 = 2; //motor pwm output
 
 int servo_buffer = 0;
 bool servo_dir = 1;
@@ -48,7 +51,9 @@ void setup()
   // However, according to the Earle Philhower library, it shouldn't. The following code is its replacement.
   PWM_Instance = new RP2040_PWM(CLOCK_PIN, 8192000, 50);
   PWM_Instance->setPWM(CLOCK_PIN, 8192000, 50);
-  
+
+  motor_PWM_1 = new RP2040_PWM(motor_pwm_pin_1, 8000000, 50); //output pin, frequency, duty cycle
+  motor_PWM_2 = new RP2040_PWM(motor_pwm_pin_2, 8000000, 50);
   
   delay(100); // Give the ADC time to recognize the clock
   
@@ -56,7 +61,7 @@ void setup()
   // -----------------------------------------------------------------------------------------------------------
   // SHOULD MODIFY PINS TO MATCH YOUR BOARD - if you do not have DRDY, ignore it. DO NOT IGNORE RESET_PIN
   // -----------------------------------------------------------------------------------------------------------
-  // ORDER: clk_pin, miso_pin, mosi_pin, cs_pin, drdy_pin, reset_pin
+  // ORDER: sck_pin, miso_pin, mosi_pin, cs_pin, drdy_pin, reset_pin
   adc.begin(14, 28, 27, 25, 20, 24);
 
   
@@ -69,6 +74,7 @@ void setup()
 
   Serial.println("ADC initialized");
   pinMode(wiper_switch, OUTPUT);
+  pinMode(horn_switch, OUTPUT);
   digitalWrite(wiper_switch, HIGH); //LOW = Off, HIGH = Drive
   pinMode(wiper_pwm, OUTPUT);
   myServo.attach(wiper_pwm, minPulseWidth, maxPulseWidth); // Adjust pulse widths as needed , [500, 2500]
@@ -105,23 +111,24 @@ void loop()
     // // adc.convert automatically converts the output into floating point voltage values
     // Serial.println(adc.convert(res.ch0));
     // Serial.print("CH1 = ");
-    // Serial.println(adc.convert(res.ch1));
-    // Serial.print("CH2 a= ");
+    // Serial.println(adc.convert(res.ch1)); //gas pedal 
+    // Serial.print("CH2 = ");
     // Serial.println(adc.convert(res.ch2));
     // Serial.print("CH3 = ");
     // Serial.println(adc.convert(res.ch3));
     // Serial.println("");
     // delay(500);
 
-    double data = adc.convert(res.ch1);
+    double brake = adc.convert(res.ch0);
+    double gas = adc.convert(res.ch1);
     
-    can.send(data, Brake);
+    can.send(brake, Brake);
     can.looper();
     data_type_rec = can.getDataType();
 
     if (strcmp(data_type_rec, "Wipers") == 0){
       wiper_data = can.getData();
-    }else if (strcmp(data_type_rec, "Horn") == 0){
+    } else if (strcmp(data_type_rec, "Horn") == 0){
       horn_data = can.getData();
     }
 
@@ -141,7 +148,7 @@ void loop()
 
     if (horn_data == 1){
       digitalWrite(horn_switch, HIGH);
-    }else{
+    } else{
       digitalWrite(horn_switch, LOW);
     }
     delay(100);

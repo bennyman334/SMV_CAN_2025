@@ -109,31 +109,31 @@ void loop(){
     blinkCycle = (blinkCycle + 1)%10;
   }
 
-    //------Accelerometer CAN stuff-------
-  int32_t accelerometer[3] = {};
-  int32_t gyroscope[3] = {};
-  if (sendBuffer%20 == 0){
-    sensor.readAccelerometer(accelerometer);
-    // sensor.readGyroscope(gyroscope);
-    
-    if(accelSendState == 0){
-      can.send(accelerometer[0], Accel_x);
-      accelSendState = 1;
-    }
-    else if(accelSendState == 1){
-      can.send(accelerometer[1], Accel_y);
-      accelSendState = 2;
-    }
-    else if(accelSendState == 2){
-      can.send(accelerometer[2], Accel_z);
-      accelSendState = 0;
-    }
-    
-    // can.send(gyroscope[0], Gyro_x);
-    // can.send(gyroscope[1], Gyro_y);
-    // can.send(gyroscope[2], Gyro_z);
-  }
-  sendBuffer += 1;
-
+//    //------Accelerometer CAN stuff-------
+//  int32_t accelerometer[3] = {};
+//  int32_t gyroscope[3] = {};
+//  if (sendBuffer%20 == 0){
+//    sensor.readAccelerometer(accelerometer);
+//    // sensor.readGyroscope(gyroscope);
+//    
+//    if(accelSendState == 0){
+//      can.send(accelerometer[0], Accel_x);
+//      accelSendState = 1;
+//    }
+//    else if(accelSendState == 1){
+//      can.send(accelerometer[1], Accel_y);
+//      accelSendState = 2;
+//    }
+//    else if(accelSendState == 2){
+//      can.send(accelerometer[2], Accel_z);
+//      accelSendState = 0;
+//    }
+//    
+//    // can.send(gyroscope[0], Gyro_x);
+//    // can.send(gyroscope[1], Gyro_y);
+//    // can.send(gyroscope[2], Gyro_z);
+//  }
+//  sendBuffer += 1;
+  
   delay(25);
 }
