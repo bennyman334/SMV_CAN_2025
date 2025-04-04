@@ -1,3 +1,5 @@
+
+
 #include "SMVcanbus.h"
 #include <string.h>
 
@@ -16,8 +18,19 @@ RP2040_PWM* motor_PWM_2;
 CANBUS can(FC);
 Servo myServo;
 
+
+//change through testing
+const int FORWARD_FASTEST = 3.2*(100/3.3); // percent duty cycle = voltage threshold * max duty cycle/max voltage
+const int FORWARD_SLOWEST = 1.7*(100/3.3);
+const int REVERSE_SLOWEST = 1.6*(100/3.3);
+const int REVERSE_FASTEST = 0.1*(100/3.3);
+bool current_reverse = 0; // 0 = forward; 1 = reverse
+float duty_cycle_out = 50; // 50% duty cycle = nothing
+float pwm_freq = 500000;
+
 double wiper_data = 0;
 double horn_data = 0;
+double reverse_data = 0;
 char* data_type_rec;
 
 
@@ -35,6 +48,7 @@ const int motor_pwm_pin_1 = 4; //motor pwm output
 const int motor_pwm_pin_2 = 2; //motor pwm output
 
 int servo_buffer = 0;
+int servo_buffer_1 = 0;
 bool servo_dir = 1;
 // ----------------------------------------------------------------------------------
 // SETUP CODE
@@ -52,12 +66,13 @@ void setup()
   PWM_Instance = new RP2040_PWM(CLOCK_PIN, 8192000, 50);
   PWM_Instance->setPWM(CLOCK_PIN, 8192000, 50);
 
-  motor_PWM_1 = new RP2040_PWM(motor_pwm_pin_1, 8000000, 50); //output pin, frequency, duty cycle
-  motor_PWM_2 = new RP2040_PWM(motor_pwm_pin_2, 8000000, 50);
+  motor_PWM_1 = new RP2040_PWM(motor_pwm_pin_1, pwm_freq, duty_cycle_out); //output pin, frequency, duty cycle
+  motor_PWM_1->setPWM(motor_pwm_pin_1, pwm_freq, duty_cycle_out);
+  motor_PWM_2 = new RP2040_PWM(motor_pwm_pin_2, pwm_freq, duty_cycle_out);
+  motor_PWM_2->setPWM(motor_pwm_pin_2, pwm_freq, duty_cycle_out);
   
   delay(100); // Give the ADC time to recognize the clock
   
-
   // -----------------------------------------------------------------------------------------------------------
   // SHOULD MODIFY PINS TO MATCH YOUR BOARD - if you do not have DRDY, ignore it. DO NOT IGNORE RESET_PIN
   // -----------------------------------------------------------------------------------------------------------
@@ -105,24 +120,36 @@ void loop()
     // ----------------------------------------------------------------------------------
 
     // // Example: printing out ADC channel values for channels 0, 1, 2, and 3
-    // Serial.print("Status = ");
-    // Serial.println(res.status, BIN);
-    // Serial.print("CH0 = ");
-    // // adc.convert automatically converts the output into floating point voltage values
-    // Serial.println(adc.convert(res.ch0));
-    // Serial.print("CH1 = ");
-    // Serial.println(adc.convert(res.ch1)); //gas pedal 
-    // Serial.print("CH2 = ");
-    // Serial.println(adc.convert(res.ch2));
-    // Serial.print("CH3 = ");
-    // Serial.println(adc.convert(res.ch3));
-    // Serial.println("");
-    // delay(500);
+//     Serial.print("Status = ");
+//     Serial.println(res.status, BIN);
+//     Serial.print("CH0 = ");
+//     // adc.convert automatically converts the output into floating point voltage values
+//     Serial.println(adc.convert(res.ch0));
+//     Serial.print("CH1 = ");
+//     Serial.println(adc.convert(res.ch1)); //gas pedal 
+//     Serial.print("CH2 = ");
+//     Serial.println(adc.convert(res.ch2));
+//     Serial.print("CH3 = ");
+//     Serial.println(adc.convert(res.ch3));
+//     Serial.println("");
+//     delay(500);
 
     double brake = adc.convert(res.ch0);
     double gas = adc.convert(res.ch1);
-    
+
+    if(gas == 0) {
+      duty_cycle_out = 50;
+    } else if(current_reverse == 0) {
+      duty_cycle_out = FORWARD_SLOWEST + gas*(FORWARD_FASTEST-FORWARD_SLOWEST)/1.1;
+    } else if (current_reverse == 1){
+      duty_cycle_out = REVERSE_SLOWEST + -1*gas*(REVERSE_SLOWEST-REVERSE_FASTEST)/1.1;
+    }
+
+    motor_PWM_1->setPWM(motor_pwm_pin_1, pwm_freq, duty_cycle_out);
+    motor_PWM_2->setPWM(motor_pwm_pin_2, pwm_freq, duty_cycle_out);
+
     can.send(brake, Brake);
+    can.send(gas, Gas);
     can.looper();
     data_type_rec = can.getDataType();
 
@@ -130,20 +157,28 @@ void loop()
       wiper_data = can.getData();
     } else if (strcmp(data_type_rec, "Horn") == 0){
       horn_data = can.getData();
+    } else if (strcmp(data_type_rec, "Reverse") == 0){
+      reverse_data = can.getData();
     }
 
     if (wiper_data == 1){
       digitalWrite(wiper_switch, HIGH);
       if (servo_buffer == 0){
-        myServo.write(180*servo_dir);
+        myServo.write(90*servo_dir);
         servo_dir = !servo_dir;
       }
       servo_buffer += 1;
       servo_buffer = servo_buffer%10;
-      } else if (wiper_data == 0){
-      myServo.write(0);
-      delay(10);
-      digitalWrite(wiper_switch, LOW);
+    } else if (wiper_data == 0){
+      if (servo_buffer_1 < 10){
+        digitalWrite(wiper_switch, HIGH);
+        myServo.write(0);
+        servo_buffer_1 += 1;
+      } else {
+        servo_buffer_1 = 0;
+        digitalWrite(wiper_switch, LOW);
+      }
+
     }
 
     if (horn_data == 1){
@@ -151,10 +186,16 @@ void loop()
     } else{
       digitalWrite(horn_switch, LOW);
     }
-    delay(100);
+
+    if (reverse_data == 0){ // UI board reverse switch unflipped
+      current_reverse = 0;
+    } else if (reverse_data == 1){ // UI board reverse switch flipped
+      current_reverse = 1;
+    }
 
     // Call adc.begin() at the end of the loop to counteract CAN-ADC bug
     // DO NOT REMOVE
+    delay(50);
     adc.begin(14, 28, 27, 25, 20, 24);
     delay(50);
 
