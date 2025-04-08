@@ -1,5 +1,3 @@
-
-
 #include "SMVcanbus.h"
 #include <string.h>
 
@@ -14,7 +12,7 @@ ADS131M04 adc;
 adcOutput res;
 RP2040_PWM* PWM_Instance;
 RP2040_PWM* motor_PWM_1;
-RP2040_PWM* motor_PWM_2;
+// RP2040_PWM* motor_PWM_2;
 CANBUS can(FC);
 Servo myServo;
 
@@ -33,7 +31,6 @@ double horn_data = 0;
 double reverse_data = 0;
 char* data_type_rec;
 
-
 const int wiper_switch = 12; //D12
 const int horn_switch = 11; //D11
 const int wiper_pwm = 13; //D13
@@ -45,7 +42,7 @@ const int neutralPulseWidth = 1500; // microseconds
 
 const int CLOCK_PIN = 26; //CLKIN
 const int motor_pwm_pin_1 = 4; //motor pwm output
-const int motor_pwm_pin_2 = 2; //motor pwm output
+// const int motor_pwm_pin_2 = 2; //motor pwm output
 
 int servo_buffer = 0;
 int servo_buffer_1 = 0;
@@ -68,8 +65,8 @@ void setup()
 
   motor_PWM_1 = new RP2040_PWM(motor_pwm_pin_1, pwm_freq, duty_cycle_out); //output pin, frequency, duty cycle
   motor_PWM_1->setPWM(motor_pwm_pin_1, pwm_freq, duty_cycle_out);
-  motor_PWM_2 = new RP2040_PWM(motor_pwm_pin_2, pwm_freq, duty_cycle_out);
-  motor_PWM_2->setPWM(motor_pwm_pin_2, pwm_freq, duty_cycle_out);
+  // motor_PWM_2 = new RP2040_PWM(motor_pwm_pin_2, pwm_freq, duty_cycle_out);
+  // motor_PWM_2->setPWM(motor_pwm_pin_2, pwm_freq, duty_cycle_out);
   
   delay(100); // Give the ADC time to recognize the clock
   
@@ -146,7 +143,7 @@ void loop()
     }
 
     motor_PWM_1->setPWM(motor_pwm_pin_1, pwm_freq, duty_cycle_out);
-    motor_PWM_2->setPWM(motor_pwm_pin_2, pwm_freq, duty_cycle_out);
+    // motor_PWM_2->setPWM(motor_pwm_pin_2, pwm_freq, duty_cycle_out);
 
     can.send(brake, Brake);
     can.send(gas, Gas);
