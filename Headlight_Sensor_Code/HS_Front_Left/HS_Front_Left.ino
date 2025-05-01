@@ -1,9 +1,14 @@
 //#include <SMVcanbus.h>
+#include <Adafruit_MCP2515.h>
 #include "SMVcanbus.h"
 #include "smv_accel.h"
 
 CANBUS can(HS2);
 
+#define ROLL 0
+#define PITCH 0
+
+//---------Data Recordings from CAN Receives--------------
 double datarec = 0; //for headlights
 double datarec1 = 0; //for blinker
 double datarec2 = 0; //for hazard;
@@ -105,6 +110,40 @@ void loop(){
     blinkCycle = (blinkCycle + 1)%10;
   }
 
+// ------Accelerometer CAN stuff-------
+ int32_t accelerometer[3] = {};
+ int32_t gyroscope[3] = {};
+ sensor.readAccelerometer(accelerometer);
+  sensor.readGyroscope(gyroscope);
+
+  int32_t x_acc = accelerometer[0];
+  int32_t y_acc = accelerometer[1];
+  int32_t z_acc = accelerometer[2];
+
+  int32_t x_gyro = gyroscope[0];
+  int32_t y_gyro = gyroscope[1];
+  int32_t z_gyro = gyroscope[2];
+
+  int32_t front_acc = -x_acc;
+  int32_t right_acc = y_acc;
+  int32_t up_acc = z_acc;
+
+  int32_t front_gyro = -x_gyro;
+  int32_t right_gyro = y_gyro;
+  int32_t up_gyro = z_gyro;
+
+  double global_front_acc = toGlobalFront(front_acc, right_acc, up_acc);
+  double global_front_gyro = toGlobalFront(front_gyro, right_gyro, up_gyro);
+  //global_front_mag = toGlobalFront(front_mag, right_mag, up_mag);
+
+  double global_right_acc = toGlobalRight(front_acc, right_acc, up_acc);
+  double global_right_gyro = toGlobalRight(front_gyro, right_gyro, up_gyro);
+  //global_right_mag = toGlobalRight(front_mag, right_mag, up_mag);
+
+  double global_up_acc = toGlobalUp(front_acc, right_acc, up_acc);
+  double global_up_gyro = toGlobalUp(front_gyro, right_gyro, up_gyro);
+  //global_up_mag = toGlobalUp(front_mag, right_mag, up_mag);
+
 //  ------Accelerometer CAN stuff-------
 //  int32_t accelerometer[3] = {};
 //  int32_t gyroscope[3] = {};
@@ -123,4 +162,15 @@ void loop(){
 //  sendBuffer += 1;
 
   delay(25);
+}
+
+
+double toGlobalFront(double front, double right, double up) {
+  return front*cos(PITCH) - up*sin(PITCH);
+}
+double toGlobalRight(double front, double right, double up) {
+  return front*sin(ROLL)*sin(PITCH) + right*cos(ROLL) + up*sin(ROLL)*cos(PITCH);
+}
+double toGlobalUp(double front, double right, double up) {
+  return front*cos(ROLL)*sin(PITCH) - right*sin(ROLL) + up*cos(PITCH)*cos(ROLL);
 }
